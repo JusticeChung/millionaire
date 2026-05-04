@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>百萬富翁</title>
+    <style>
+        /* 這裡控制遊戲的畫面風格 (CSS) */
+        body { 
+            background-color: #000033; /* 經典深藍色背景 */
+            color: white; 
+            font-family: 'Arial', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        #game-container { width: 90%; max-width: 800px; text-align: center; }
+        #status-bar { margin-bottom: 20px; font-size: 1.5rem; color: #ffcc00; font-weight: bold; }
+        #question-box { 
+            border: 3px solid #ffffff; 
+            padding: 30px; 
+            margin-bottom: 20px; 
+            border-radius: 50px; /* 橢圓形邊框 */
+            background-color: #000066; 
+            font-size: 1.5rem;
+            line-height: 1.5;
+        }
+        .options-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* 兩兩並排 */
+            gap: 20px; 
+        }
+        .option-btn { 
+            background-color: #000000; 
+            border: 2px solid #ffcc00; 
+            color: white; 
+            padding: 20px; 
+            cursor: pointer; 
+            border-radius: 40px; 
+            font-size: 1.2rem; 
+            transition: 0.3s;
+            text-align: left;
+        }
+        .option-btn:hover { background-color: #ffcc00; color: black; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- 顯示目前獎金 -->
+        <div id="status-bar">目前挑戰獎金：<span id="prize-money">$0</span></div>
+        
+        <!-- 顯示題目 -->
+        <div id="question-box">載入題目中...</div>
+        
+        <!-- 四個選項按鈕 -->
+        <div class="options-grid">
+            <button class="option-btn" onclick="checkAnswer(0)" id="btn-0"></button>
+            <button class="option-btn" onclick="checkAnswer(1)" id="btn-1"></button>
+            <button class="option-btn" onclick="checkAnswer(2)" id="btn-2"></button>
+            <button class="option-btn" onclick="checkAnswer(3)" id="btn-3"></button>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================
+           這裡是你專屬的題目資料庫！
+           你可以依照格式無限往下新增題目
+           ========================================== */
+        const questions = [
+            {
+                question: "請問在經典的網頁設計中，負責控制「畫面美觀與排版」的是哪一種語言？",
+                options: ["A. HTML", "B. CSS", "C. JavaScript", "D. Python"],
+                answer: 1, // 正確答案的索引值：0代表A, 1代表B, 2代表C, 3代表D
+                prize: "$1,000"
+            },
+            {
+                question: "我們所在的地球，主要由哪兩種氣體組成大氣層？",
+                options: ["A. 氧氣與二氧化碳", "B. 氫氣與氦氣", "C. 氮氣與氧氣", "D. 氮氣與氫氣"],
+                answer: 2,
+                prize: "$2,000"
+            },
+            {
+                question: "這是一個測試你修改題目的地方！你想把這題改成什麼呢？",
+                options: ["A. 選項一", "B. 選項二", "C. 正確選項三", "D. 選項四"],
+                answer: 2,
+                prize: "$3,000"
+            }
+        ];
+
+        /* 遊戲核心邏輯 (JavaScript) */
+        let currentQuestionIndex = 0;
+
+        // 載入題目的函數
+        function loadQuestion() {
+            // 如果題目答完了
+            if (currentQuestionIndex >= questions.length) {
+                document.getElementById('question-box').innerText = "🎉 恭喜你答對所有題目！成為百萬富翁！ 🎉";
+                document.querySelector('.options-grid').style.display = 'none';
+                return;
+            }
+
+            // 取得目前的題目
+            const currentQ = questions[currentQuestionIndex];
+            
+            // 更新網頁上的文字
+            document.getElementById('question-box').innerText = currentQ.question;
+            document.getElementById('prize-money').innerText = currentQ.prize;
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`btn-${i}`).innerText = currentQ.options[i];
+            }
+        }
+
+        // 檢查答案的函數
+        function checkAnswer(selectedIndex) {
+            const currentQ = questions[currentQuestionIndex];
+            
+            if (selectedIndex === currentQ.answer) {
+                alert("✅ 答對了！準備進入下一題！");
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                alert("❌ 答錯了！很遺憾，遊戲結束。");
+                // 這裡可以設定回到第一題，或是顯示最終獲得獎金
+                currentQuestionIndex = 0; 
+                loadQuestion();
+            }
+        }
+
+        // 啟動遊戲
+        loadQuestion();
+    </script>
+</body>
+</html>
