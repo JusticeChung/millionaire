@@ -57,4 +57,229 @@
             gap: 15px;
         }
         @media (max-width: 600px) {
-            #options-
+            #options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .option-btn {
+            background-color: transparent;
+            color: #fff;
+            border: 2px solid #45a29e;
+            border-radius: 30px;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            word-break: break-word;
+        }
+        .option-btn:hover:not(:disabled) {
+            background-color: #45a29e;
+            color: #0b0c10;
+            box-shadow: 0 0 15px #45a29e;
+        }
+        .option-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .option-btn.correct {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: white !important;
+            box-shadow: 0 0 15px #28a745;
+        }
+        .option-btn.wrong {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: white !important;
+            box-shadow: 0 0 15px #dc3545;
+        }
+        #tools {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .tool-btn {
+            background-color: #1f2833;
+            color: #ffd700;
+            border: 1px solid #ffd700;
+            border-radius: 20px;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .tool-btn:hover:not(:disabled) {
+            background-color: #ffd700;
+            color: #1f2833;
+        }
+        .tool-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+        #message-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(11, 12, 16, 0.95);
+            z-index: 10;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #message-text {
+            font-size: 2.5em;
+            color: #66fcf1;
+            margin-bottom: 30px;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .restart-btn {
+            background-color: #45a29e;
+            color: #0b0c10;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .restart-btn:hover {
+            background-color: #66fcf1;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>🎙️ 辯論百萬富翁</h1>
+        <div id="tools">
+            <button id="btn-5050" class="tool-btn" onclick="use5050()">錦囊：50/50 (刪除兩錯項)</button>
+        </div>
+        <div id="level-info">第 1 題 / 共 20 題</div>
+        <div id="question-box">載入題目中...</div>
+        <div id="options-grid">
+            <button class="option-btn" onclick="checkAnswer(0)" id="opt-0"></button>
+            <button class="option-btn" onclick="checkAnswer(1)" id="opt-1"></button>
+            <button class="option-btn" onclick="checkAnswer(2)" id="opt-2"></button>
+            <button class="option-btn" onclick="checkAnswer(3)" id="opt-3"></button>
+        </div>
+    </div>
+
+    <div id="message-screen">
+        <div id="message-text"></div>
+        <button class="restart-btn" onclick="startGame()">重新挑戰</button>
+    </div>
+
+    <script>
+        const questions = [
+            { "q": "【熱身題】在傳統辯論賽制中，負責在比賽最後總結全場交鋒點、重申己方核心價值的辯手稱為：", "o": [ "A. 一辯", "B. 二辯", "C. 自由辯手", "D. 結辯" ], "a": 3 },
+            { "q": "【熱身題】辯論賽中，雙方輪流交替發言，節奏最緊湊且允許直接駁斥對方的環節是：", "o": [ "A. 申論", "B. 質詢", "C. 自由辯論", "D. 總結" ], "a": 2 },
+            { "q": "【熱身題】準備一場辯論比賽，全隊拿到辯題後的第一步通常是：", "o": [ "A. 練習發言語氣", "B. 破題與定義關鍵字", "C. 撰寫結辯講稿", "D. 尋找對方的黑材料" ], "a": 1 },
+            { "q": "【難度提升】關於辯論中的「舉證責任」，以下哪一項描述最為準確且符合底層邏輯？", "o": [ "A. 雙方都必須平均地提出同等數量的證據，否則評判無法打分", "B. 提出主張的一方，有責任提出實質證據來支持其主張（誰主張，誰舉證）", "C. 為了保證公平，反對別人觀點的一方必須提出反證（誰反駁，誰舉證）", "D. 只有正方需要承擔舉證責任，反方只需指出正方的邏輯漏洞即可" ], "a": 1 },
+            { "q": "【難度提升】在政策性辯論中，討論「根屬性」（Inherent）時，我們實質上是在探討什麼？", "o": [ "A. 該政策能否從根本上、徹底地解決目前所有的社會問題", "B. 目前的社會問題是否深植於現有制度之中，且不改變現有制度就無法解決", "C. 目前的問題是否已經帶來了極大且根本性的損害，到了必須立刻解決的地步", "D. 該政策帶來的根本利益，是否遠遠大於其執行過程造成的弊端" ], "a": 1 },
+            { "q": "【難度提升】「滑坡謬誤」與正當的「連鎖推論」在辯論場上十分相似，它們之間最大的區別在於：", "o": [ "A. 滑坡謬誤推導出的結果通常是災難性的，而連鎖推論推導出的結果通常是正面的", "B. 滑坡謬誤缺乏每個環節之間的必然性與機率考量，而連鎖推論具有嚴謹的因果論證", "C. 滑坡謬誤是反方用來恐嚇評判的技巧，連鎖推論是正方用來描繪願景的技巧", "D. 滑坡謬誤的推導步驟超過三個，而連鎖推論的步驟通常只有一到兩個" ], "a": 1 },
+            { "q": "【難度提升】「偷換概念」和「重新定義」的界線往往很模糊。判斷一個定義是否屬於惡意「偷換概念」的核心標準是：", "o": [ "A. 該定義是否完全對己方立場有利，讓對方陷入劣勢", "B. 該定義是否偏離了社會大眾的普遍認知及探討語境，純粹為了逃避實質交鋒", "C. 該定義是否沒有被權威字典收錄，只要字典沒有的都是偷換概念", "D. 該定義是否過於創新，導致對手一時之間無法作出反駁" ], "a": 1 },
+            { "q": "【難度提升】當我們評估一個論點是否具有「排他性」時，我們在評估什麼？", "o": [ "A. 這個論點的立場是否非常極端，排斥了所有其他可能的折衷方案", "B. 這個解決方案帶來的好處，是否只能由我方立場來實現，對方立場無法兼容", "C. 這個論點是否能同時解決我方和對方的問題，達到雙贏的排他效果", "D. 這個好處雖然雙方都能達成，但我方的執行效率明顯比對方更高" ], "a": 1 },
+            { "q": "【難度提升】辯論中常交鋒的「應然」與「實然」層面，以下區分何者最準確？", "o": [ "A. 「應然」代表未來的理想狀態，「實然」代表過去的歷史教訓", "B. 「應然」探討事物在道德、法理或價值上「應該」是怎樣的，「實然」探討事物在現實運作中「實際」是怎樣的", "C. 「應然」是政策實施前必須滿足的條件，「實然」是政策實施後產生的副作用", "D. 「應然」的論點通常基於感性訴求，「實然」的論點通常基於理性的數據支持" ], "a": 1 },
+            { "q": "【實戰回應】辯題「中學生應否全面禁用智能手機」。正方提出：「學生自制力差，用手機會沉迷遊戲導致成績下降」。反方最能有效斬斷其邏輯鏈的回應是：", "o": [ "A. 沉迷遊戲是因為家長平時缺乏陪伴與教育，這根本不是手機的問題。", "B. 學業成績並不是衡量中學生的唯一標準，他們擁有快樂的童年更重要。", "C. 禁用手機會剝奪學生在網上學習和搜尋資料的權利，這樣做會得不償失。", "D. 禁用手機無法解決自制力差的根本問題，學生依然會沉迷電腦或電視；唯有不禁用並引導正確使用，才能真正鍛鍊自制力。" ], "a": 3 },
+            { "q": "【實戰回應】辯題「金錢是萬惡之源」。正方列舉了大量因為金錢引發的貪污、謀殺、搶劫案件。反方哪種回應策略最能有效拆解對方邏輯？", "o": [ "A. 列舉更多因為其他原因（如愛情、嫉妒、權力）引發的犯罪案件，證明金錢不是唯一來源。", "B. 指出金錢其實也做了很多好事，例如慈善捐款、建立醫院，所以金錢也是萬善之源。", "C. 點出正方混淆了「金錢作為交易媒介的本質」與「人類對金錢的無盡貪慾」，萬惡之源是人性的貪婪，而非金錢本身。", "D. 嚴厲質疑正方舉出的那些犯罪案件的數據來源是否具備權威性與代表性。" ], "a": 2 },
+            { "q": "【實戰回應】辯題「社交媒體讓人更親近還是更疏遠」。對方咄咄逼人地質問：「難道對方辯友敢說，你從來沒有因為滑IG而忽略身邊的家人嗎？」面對這種個人化誘導提問，最佳回應是：", "o": [ "A. 有時候確實會，但這只是我個人的自制力問題，不能代表全社會所有人的狀況。", "B. 對方辯友請不要進行人身攻擊或窺探隱私，我們應該回到客觀的辯題進行討論。", "C. 偶爾的忽略不代表關係疏遠；社交媒體讓我能隨時關心遠在異國的親友，這種打破地域限制的連結，才是常態的親近。", "D. 你自己難道就沒有滑手機忽略家人嗎？大家都一樣，你憑什麼只指責我！" ], "a": 2 },
+            { "q": "【實戰回應】對方為了證明己方觀點，提出了一個極度荒謬且沒有科學數據支持的極端例子（例如：常吃快餐會立刻導致全人類基因突變）。你作為接續發言的辯手，應該如何處理最有效率？", "o": [ "A. 花費兩分鐘的時間，詳細論證吃快餐為什麼不會導致基因突變，並給出生物學數據。", "B. 簡單一句指出對方犯了「滑坡謬誤」且缺乏實證，不隨之起舞，並迅速將焦點拉回己方的核心戰場。", "C. 大聲嘲笑對方的例子太過缺乏常識，試圖用氣勢壓倒對方並讓全場觀眾發笑。", "D. 順著對方的話幽默反擊：「就算基因突變，說不定我們會變成超級英雄呢？」" ], "a": 1 },
+            { "q": "【實戰回應】辯題「發展經濟比保護環境更重要」。反方（環保）動情地說：「如果地球都毀滅了，人類都滅亡了，賺再多的錢有什麼用？」正方最合適的反駁視角是：", "o": [ "A. 地球並沒有那麼脆弱，對方辯友所說的世界末日完全是杞人憂天。", "B. 保護環境需要龐大的資金、新能源研發和科技投入，沒有強大的經濟發展作為後盾，我們根本無力實行環保。", "C. 發展經濟可以推動航天科技，以後我們可以移民去火星，所以地球毀滅也沒關係。", "D. 如果經濟崩潰，窮人會立刻餓死，這比幾百年後地球毀滅更早發生，所以經濟更重要。" ], "a": 1 },
+            { "q": "【實戰回應】對方在自由辯論中，利用語速優勢連續拋出三個細節問題要求你立刻回答。作為成熟的辯手，你接過麥克風後應該？", "o": [ "A. 為了展現不甘示弱的氣勢，同樣以極快的語速逐一回答對方所有問題。", "B. 向評判抱怨對方問題過多且零碎，要求評判不予理會。", "C. 洞察這三個問題背後的共同盲點，用一個底層邏輯統一回應，隨即反問一個能推進己方戰線的核心問題。", "D. 挑選其中最容易回答的一個問題進行詳細解答，對另外兩個問題避而不談。" ], "a": 2 },
+            { "q": "【實戰回應】辯題「推動性別平權，採取激進/溫和手段更有利」。當對方（溫和派）指出「激進手段會引發社會既得利益者的反感與社會撕裂」時，己方（激進派）最具高度的抗辯是：", "o": [ "A. 溫和派根本沒有任何實質行動，只會一味妥協，這叫懦弱不叫推動。", "B. 社會反感是因為他們本身就是既得利益者，我們根本不需要在乎壓迫者的感受。", "C. 歷史上所有重大平權（如廢奴、女性投票權）初期都曾被視為「過於激進」並引發撕裂，這種短暫的陣痛是打破結構性壓迫必經的代價。", "D. 我們其實可以一邊採取激進手段，一邊展現溫和態度，兩者並不衝突。" ], "a": 2 },
+            { "q": "【實戰回應】對方結辯試圖用一個極度煽情的社會悲慘命案來收尾，試圖贏得評判的感性分數。我方結辯（在對方之後發言）應該如何化解最具說服力？", "o": [ "A. 嚴厲指責對方在莊嚴的辯論場上打感情牌，這是不理性的表現。", "B. 立刻拋棄原定講稿，講述一個比對方更悲慘的社會案件來進行情緒反擊。", "C. 展現同理心共情該故事，但冷靜點出該悲劇正是由於對方提倡的制度（或現狀漏洞）所導致，而我方的方案才能真正杜絕此類悲劇重演。", "D. 完全無視對方的故事渲染，繼續面無表情地念完自己預先寫好的結辯稿。" ], "a": 2 },
+            { "q": "【實戰回應】當比賽陷入「定義戰」（雙方對關鍵詞的定義完全不同，導致各說各話的平行時空）且僵持不下時，最佳的推進策略是：", "o": [ "A. 堅持己方定義絕對正確，不斷重複朗讀權威字典上的解釋直到時間結束。", "B. 暫時抽離定義本身，直接向評判比較：雙方的定義在現實社會的討論中，哪一個更有現實意義、更能解決當下的社會痛點（比較定義的價值）。", "C. 直接妥協並接受對方的定義，然後試圖在對方的邏輯框架下臨時想論點打贏對方。", "D. 嚴厲指責對方惡意曲解辯題、死鑽牛角尖，破壞了整場比賽的觀賞體驗。" ], "a": 1 },
+            { "q": "【實戰回應】對方在質詢時使用「非黑即白」的二分法逼問：「對方辯友，你到底認為『生命』更重要，還是『自由』更重要？今天你必須選一個！」最能破解此陷阱的話術是：", "o": [ "A. 隨便選一個對方較難反駁的，然後開始硬拗己方立場。", "B. 拒絕回答，並表示對方的問題太過極端，毫無討論價值。", "C. 點出對方的虛假對立：「這並非零和博弈。沒有生命的自由是虛無，沒有自由的生命是奴役；我方主張在保障生命底線的前提下最大化自由，拒絕極端二選一。」", "D. 不正面回答，直接反問對方：「那對方辯友你自己又選什麼呢？」" ], "a": 2 },
+            { "q": "【實戰回應】辯題「當今社會，通才還是專才更吃香」。對方舉例：「馬斯克懂物理、編程、商業，所以通才絕對更吃香。」若你要運用「拆解特例與普遍性」的技巧回應，最佳說法是：", "o": [ "A. 馬斯克其實本質上是個專才，他最專精的技能就是賺錢和營銷。", "B. 馬斯克是百年難遇的天才，其成功路徑無法複製。探討『社會上誰更吃香』，應該看就業市場的普遍數據和普通大眾的生存法則，而非極端倖存者偏差的特例。", "C. 馬斯克雖然自己懂很多，但他旗下的SpaceX和Tesla聘請的全部都是專才，可見專才比他更重要。", "D. 對方舉馬斯克，那我就舉愛因斯坦，愛因斯坦就是專才成功的最好例子。" ], "a": 1 }
+        ];
+
+        let currentIndex = 0;
+        let isAnswering = false;
+
+        function startGame() {
+            currentIndex = 0;
+            document.getElementById('message-screen').style.display = 'none';
+            document.getElementById('btn-5050').disabled = false;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswering = false;
+            const qData = questions[currentIndex];
+            document.getElementById('level-info').innerText = `第 ${currentIndex + 1} 題 / 共 20 題`;
+            document.getElementById('question-box').innerText = qData.q;
+            
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`opt-${i}`);
+                btn.innerText = qData.o[i];
+                btn.className = 'option-btn'; // 重置樣式
+                btn.disabled = false;
+                btn.style.visibility = 'visible'; // 重置 50/50 隱藏
+            }
+        }
+
+        function checkAnswer(selectedIndex) {
+            if (isAnswering) return;
+            isAnswering = true;
+            
+            const qData = questions[currentIndex];
+            const correctIndex = qData.a;
+            const selectedBtn = document.getElementById(`opt-${selectedIndex}`);
+            const correctBtn = document.getElementById(`opt-${correctIndex}`);
+
+            // 鎖定所有按鈕
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`opt-${i}`).disabled = true;
+            }
+
+            if (selectedIndex === correctIndex) {
+                selectedBtn.classList.add('correct');
+                setTimeout(() => {
+                    currentIndex++;
+                    if (currentIndex < questions.length) {
+                        loadQuestion();
+                    } else {
+                        showEndScreen("🎉 恭喜你！<br>成功通關 20 題，成為辯論大師！");
+                    }
+                }, 1500);
+            } else {
+                selectedBtn.classList.add('wrong');
+                correctBtn.classList.add('correct'); // 顯示正確答案
+                setTimeout(() => {
+                    showEndScreen(`😢 答錯了！<br>你在第 ${currentIndex + 1} 題止步。`);
+                }, 2000);
+            }
+        }
+
+        function use5050() {
+            if (isAnswering) return;
+            const btn5050 = document.getElementById('btn-5050');
+            btn5050.disabled = true;
+
+            const qData = questions[currentIndex];
+            const correctIndex = qData.a;
+            
+            let wrongIndices = [0, 1, 2, 3].filter(i => i !== correctIndex);
+            // 隨機打亂錯誤選項陣列並取前兩個
+            wrongIndices.sort(() => Math.random() - 0.5);
+            const toHide = [wrongIndices[0], wrongIndices[1]];
+
+            toHide.forEach(index => {
+                const btn = document.getElementById(`opt-${index}`);
+                btn.style.visibility = 'hidden';
+            });
+        }
+
+        function showEndScreen(msg) {
+            const screen = document.getElementById('message-screen');
+            document.getElementById('message-text').innerHTML = msg;
+            screen.style.display = 'flex';
+        }
+
+        // 初始化遊戲
+        window.onload = startGame;
+    </script>
+</body>
+</html>
