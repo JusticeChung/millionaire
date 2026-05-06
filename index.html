@@ -1,215 +1,60 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>百萬富翁 - 進階版</title>
+    <title>辯論版百萬富翁</title>
     <style>
-        :root {
-            --primary-blue: #000066;
-            --gold: #ffcc00;
-            --white: #ffffff;
-        }
-        body { 
-            background-color: #000022; 
-            color: var(--white); 
-            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; 
-            margin: 0; 
+        body {
+            background-color: #0b0c10;
+            color: #c5c6c7;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
-        #game-ui { width: 90%; max-width: 900px; text-align: center; margin-top: 50px; }
-        
-        /* 錦囊樣式 */
-        .lifelines { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
-        .lifeline-btn { 
-            width: 80px; height: 50px; border-radius: 25px; border: 2px solid var(--gold);
-            background: var(--primary-blue); color: var(--gold); font-weight: bold; cursor: pointer;
+        #game-container {
+            width: 100%;
+            max-width: 800px;
+            background: radial-gradient(circle, #1f2833 0%, #0b0c10 100%);
+            border: 2px solid #66fcf1;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(102, 252, 241, 0.3);
+            text-align: center;
         }
-        .lifeline-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: gray; color: gray; }
-
-        /* 題目區域 */
-        #prize-display { font-size: 1.5rem; color: var(--gold); margin-bottom: 10px; }
-        #question-box { 
-            background: var(--primary-blue); border: 4px solid var(--white); 
-            padding: 40px; border-radius: 60px; font-size: 1.8rem; margin-bottom: 30px;
-            position: relative;
+        h1 {
+            color: #66fcf1;
+            text-shadow: 0 0 10px rgba(102, 252, 241, 0.5);
+            margin-top: 0;
         }
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .option-btn { 
-            background: black; border: 2px solid var(--gold); color: var(--white);
-            padding: 20px; border-radius: 40px; font-size: 1.3rem; cursor: pointer;
-            text-align: left; transition: 0.2s;
+        #level-info {
+            font-size: 1.2em;
+            color: #45a29e;
+            margin-bottom: 20px;
+            font-weight: bold;
         }
-        .option-btn:hover:not(:disabled) { background: var(--gold); color: black; }
-        .option-btn:disabled { visibility: hidden; } /* 50:50 隱藏選項 */
-
-        /* 編輯器與彈窗 */
-        #editor-toggle { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; border: none; padding: 10px; cursor: pointer; opacity: 0.5; }
-        #editor-section { display: none; position: fixed; top: 10%; background: #eee; color: black; padding: 20px; width: 80%; max-height: 70vh; overflow-y: auto; z-index: 100; border-radius: 10px; }
-        textarea { width: 100%; height: 200px; font-family: monospace; }
-        
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; color: black; padding: 30px; border-radius: 15px; z-index: 200; text-align: center; border: 5px solid var(--gold); }
-    </style>
-</head>
-<body>
-
-    <div id="game-ui">
-        <div class="lifelines">
-            <button class="lifeline-btn" id="life-50" onclick="use5050()">50:50</button>
-            <button class="lifeline-btn" id="life-phone" onclick="usePhone()">📞</button>
-            <button class="lifeline-btn" id="life-audience" onclick="useAudience()">📊</button>
-        </div>
-
-        <div id="prize-display">目前挑戰：<span id="prize-money">$0</span></div>
-        <div id="question-box">點擊下方「編輯題目」按鈕開始！</div>
-        
-        <div class="options-grid">
-            <button class="option-btn" onclick="handleAnswer(0)" id="btn-0"></button>
-            <button class="option-btn" onclick="handleAnswer(1)" id="btn-1"></button>
-            <button class="option-btn" onclick="handleAnswer(2)" id="btn-2"></button>
-            <button class="option-btn" onclick="handleAnswer(3)" id="btn-3"></button>
-        </div>
-    </div>
-
-    <div id="modal" class="modal">
-        <h3 id="modal-title"></h3>
-        <p id="modal-body" style="font-size: 1.2rem;"></p>
-        <button onclick="closeModal()">確定</button>
-    </div>
-
-    <button id="editor-toggle" onclick="toggleEditor()">🛠️ 編輯題目</button>
-    <div id="editor-section">
-        <h3>題目編輯器 (JSON 格式)</h3>
-        <p>請將題目貼在下方，然後點擊儲存：</p>
-        <textarea id="json-input"></textarea><br><br>
-        <button onclick="saveQuestions()">儲存並重新開始遊戲</button>
-        <button onclick="toggleEditor()">關閉</button>
-    </div>
-
-    <audio id="snd-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
-    <audio id="snd-wrong" src="https://assets.mixkit.co/active_storage/sfx/2004/2004-preview.mp3"></audio>
-
-    <script>
-        // 預設題目範例
-        let defaultQuestions = [
-            { q: "「百萬富翁」遊戲中，一共有幾個求救錦囊？", o: ["A. 1個", "B. 2個", "C. 3個", "D. 4個"], a: 2, p: "$1,000" },
-            { q: "下列哪一個不是常見的網頁前端技術？", o: ["A. HTML", "B. CSS", "C. JavaScript", "D. Java"], a: 3, p: "$2,000" }
-        ];
-
-        let questions = JSON.parse(localStorage.getItem('myQuestions')) || defaultQuestions;
-        let currentIndex = 0;
-        let lifelines = { fifty: true, phone: true, audience: true };
-
-        function initGame() {
-            currentIndex = 0;
-            lifelines = { fifty: true, phone: true, audience: true };
-            updateLifelineButtons();
-            loadQuestion();
-            document.getElementById('json-input').value = JSON.stringify(questions, null, 2);
+        #question-box {
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 2px solid #45a29e;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.5;
         }
-
-        function loadQuestion() {
-            if (currentIndex >= questions.length) {
-                document.getElementById('question-box').innerText = "🏆 恭喜！你贏得了最高獎金！";
-                return;
-            }
-            const data = questions[currentIndex];
-            document.getElementById('question-box').innerText = data.q;
-            document.getElementById('prize-money').innerText = data.p;
-            for (let i = 0; i < 4; i++) {
-                const btn = document.getElementById(`btn-${i}`);
-                btn.innerText = data.o[i];
-                btn.style.visibility = 'visible';
-                btn.disabled = false;
-            }
+        #options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
-
-        function handleAnswer(idx) {
-            if (idx === questions[currentIndex].a) {
-                document.getElementById('snd-correct').play();
-                alert("答對了！");
-                currentIndex++;
-                loadQuestion();
-            } else {
-                document.getElementById('snd-wrong').play();
-                alert("答錯了！遊戲結束。");
-                initGame();
-            }
-        }
-
-        // --- 錦囊邏輯 ---
-        function use5050() {
-            if (!lifelines.fifty) return;
-            const correctIdx = questions[currentIndex].a;
-            let removed = 0;
-            let indices = [0, 1, 2, 3].filter(i => i !== correctIdx);
-            indices.sort(() => Math.random() - 0.5);
-            
-            document.getElementById(`btn-${indices[0]}`).style.visibility = 'hidden';
-            document.getElementById(`btn-${indices[1]}`).style.visibility = 'hidden';
-            
-            lifelines.fifty = false;
-            updateLifelineButtons();
-        }
-
-        function usePhone() {
-            if (!lifelines.phone) return;
-            const data = questions[currentIndex];
-            const friendAnswers = ["A", "B", "C", "D"];
-            const hint = Math.random() > 0.3 ? friendAnswers[data.a] : friendAnswers[Math.floor(Math.random()*4)];
-            showModal("打電話問朋友", `朋友說：『我不太確定，但我猜應該是 ${hint} 吧...？』`);
-            lifelines.phone = false;
-            updateLifelineButtons();
-        }
-
-        function useAudience() {
-            if (!lifelines.audience) return;
-            const data = questions[currentIndex];
-            let results = [10, 10, 10, 10];
-            results[data.a] += 50; // 正確答案機率較高
-            showModal("問觀眾", `A: ${results[0]}%, B: ${results[1]}%, C: ${results[2]}%, D: ${results[3]}%`);
-            lifelines.audience = false;
-            updateLifelineButtons();
-        }
-
-        // --- 輔助功能 ---
-        function updateLifelineButtons() {
-            document.getElementById('life-50').disabled = !lifelines.fifty;
-            document.getElementById('life-phone').disabled = !lifelines.phone;
-            document.getElementById('life-audience').disabled = !lifelines.audience;
-        }
-
-        function toggleEditor() {
-            const editor = document.getElementById('editor-section');
-            editor.style.display = (editor.style.display === 'block') ? 'none' : 'block';
-        }
-
-        function saveQuestions() {
-            try {
-                const input = document.getElementById('json-input').value;
-                questions = JSON.parse(input);
-                localStorage.setItem('myQuestions', JSON.stringify(questions));
-                toggleEditor();
-                initGame();
-                alert("題目已儲存並重新載入！");
-            } catch (e) {
-                alert("JSON 格式錯誤，請檢查括號與逗號。");
-            }
-        }
-
-        function showModal(title, body) {
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-body').innerText = body;
-            document.getElementById('modal').style.display = 'block';
-        }
-
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
-
-        initGame();
-    </script>
-</body>
-</html>
+        @media (max-width: 600px) {
+            #options-
